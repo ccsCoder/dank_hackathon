@@ -116,6 +116,10 @@ var ChartDataApi = (function(endPoint) {
  */
 var ChartFactory = (function(dataSource) {
 
+    var statusFlags = {
+        showTooltips: true
+    };
+
     function _themify() {
         Highcharts.theme = {
             colors: ['#2b908f', '#90ee7e', '#f45b5b', '#7798BF', '#aaeeee', '#ff0066',
@@ -356,7 +360,15 @@ var ChartFactory = (function(dataSource) {
                 }
             },
             tooltip: {
-                pointFormat: '{series.name} has allocated <b>{point.y:,.0f}</b><br/>k INR at {point.x}'
+                // pointFormat: '{series.name} has allocated <b>{point.y:,.0f}</b><br/>k INR at {point.x}',
+                shared: false,
+                formatter: function() {
+                    if (statusFlags.showTooltips === false ) {
+                        return false;
+                    } else {
+                        return this.series.name + ' : '+ this.y; 
+                    }
+                }
             },
             plotOptions: {
                 area: {
@@ -379,9 +391,30 @@ var ChartFactory = (function(dataSource) {
                         draggableY: true,
                         liveRedraw: true
                     },
+                    point: {
+                        events: {
+                            dragStart: function (e) {
+                                statusFlags.showTooltips = false;
+                            },
+                            drag: function(e) {
+                                statusFlags.showTooltips = false;
+                                if (this.series.name !== "Current") {
+                                    return false;
+                                }
+
+                            },
+                            drop: function (e) {
+                                if (this.series.name !== "Current") {
+                                    return false;
+                                }
+                                statusFlags.showTooltips = true;
+                            }
+                        }
+                    },
                     animation: {
                         duration: 2000
                     }
+                    
                 }
                 
             },
