@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="css/style.css"/>
+
+    <!-- Scripts -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.1.0/handlebars.js"></script>
+    <script src="http://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+
+    <script type="text/x-handlebars-template" id="timeline-template">
+        {{#each timelineData}}
+            <li class="hour">
+                <input class="radio" type="radio" checked>
+                <div class="relative">
+                    <label class="default-hidden">Edit Allocation</label>
+                    <span class="date">{{this.time}}</span>
+                    <span class="circle"></span>
+                </div>
+                <div class="content budget-editor-content default-hidden">
+                    <div class="form-editor">
+                    <button class="step-button decrement">-</button>
+                    <div class="budget-input">{{this.budget}}</div>
+                    <button class="step-button increment">+</button>
+                    </div>
+                </div>
+            </li>
+        {{/each}}
+    </script>
+
+    <title>Timeline</title>
+</head>
+<body>
+    <h2>Budget Pacer</h2>
+    <div class="container">
+        <div class="graph-container">
+            <div id="budgetTrendChartContainer" class="charts-container"></div>
+        </div>
+
+    </div>
+    <!-- <ul id="timeline" class="timeline-container">
+    </ul> -->
+
+    <script src="js/main.js"></script>
+    <script>
+        $(function() {
+            var chartConfig = ChartFactory.configure();
+            ChartFactory.render('budgetTrendChartContainer', chartConfig);
+            
+        })
+    </script>
+</body>
+</html>
