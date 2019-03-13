@@ -1,3 +1,7 @@
+//constants
+
+const DATA_END_POINT = 'https://dev-dsk-singhzns-2b-b8458a0d.us-west-2.amazon.com:8443/hackathon';
+
 var timelineData = [{
       time: '00',
       budget: '1000'
@@ -92,15 +96,30 @@ var ChartDataApi = (function(endPoint) {
 
     function _getBudgetData() {
 
-        if (!endPoint) {
-            return new Promise(function(resolve, reject) {
-                var data  = {"BIDValues": ["5897", "215923", "100131", "275363", "43358", "4868", "132979", "39238", "931169", "870", "55788", "942583", "992460", "7354", "305551", "13714", "39000", "30000", "104493", "806182", "706169", "8405", "39707", "58642"], 
-               "Values": 
-                ["58197", "115923", "200131", "275563", "343358", "394868", "432979", "439238", "431169", "458870", "455788", "425983", "392460", "387354", "395551", "383714", "395837", "388527", "304493", "206182", "106169", "58405", "39707", "38642"]
-              };
-                resolve(data);
-            });
-        }
+        // if (!endPoint) {
+            // return new Promise(function(resolve, reject) {
+            //     var data  = {"historicalClicks": ["5897", "215923", "100131", "275363", "43358", "4868", "132979", "39238", "931169", "870", "55788", "942583", "992460", "7354", "305551", "13714", "39000", "30000", "104493", "806182", "706169", "8405", "39707", "58642"], 
+            //    "predictedClicks": 
+            //     ["58197", "115923", "200131", "275563", "343358", "394868", "432979", "439238", "431169", "458870", "455788", "425983", "392460", "387354", "395551", "383714", "395837", "388527", "304493", "206182", "106169", "58405", "39707", "38642"],
+            //     "spend": [],
+            //     "actualClicks": []
+
+            //   };
+            //     resolve(data);
+            // });
+        // } else {
+            return fetch(endPoint, {
+                headers: {
+                    "Access-Control-Allow-Origin": "*"
+                }
+            })
+                .then(function(data) {
+                    return data;
+                })
+                .catch(function() {
+                    alert("Something went wrong!");
+                });
+        // }
 
     }
 
@@ -108,7 +127,7 @@ var ChartDataApi = (function(endPoint) {
         getData : _getBudgetData
     }
     
-})();
+})(DATA_END_POINT);
 
 
 /**
@@ -395,6 +414,7 @@ var ChartFactory = (function(dataSource) {
                         events: {
                             dragStart: function (e) {
                                 statusFlags.showTooltips = false;
+
                             },
                             drag: function(e) {
                                 statusFlags.showTooltips = false;
@@ -428,10 +448,11 @@ var ChartFactory = (function(dataSource) {
 
     function _render(ctr, config) {
         dataSource.then(function(chartData) {
-            console.log(chartData);
+            // debugger;
+
             var chart = Highcharts.chart(ctr, config);
-            chart.series[1].setData(chartData.BIDValues.map(function(val){ return parseInt(val);}));
-            chart.series[0].setData(chartData.Values.map(function(val){ return parseInt(val);}));
+            chart.series[1].setData(chartData.historicalClicks.map(function(val){ return parseInt(val);}));
+            chart.series[0].setData(chartData.predictedClicks.map(function(val){ return parseInt(val);}));
             // debugger;
         })
     }
