@@ -129,7 +129,10 @@ var ChartFactory = (function(dataSource) {
                     ]
                 },
                 plotBorderColor: '#606063',
-                backgroundColor: null
+                backgroundColor: null,
+                style: {
+                    fontFamily: "Amazon Ember"
+                }
             },
             title: {
                 style: {
