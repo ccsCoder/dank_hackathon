@@ -83,10 +83,38 @@ var TimeLine = (function(data, container) {
 
 })(timelineData, $('#timeline'));
 
+
 /**
- * Chart data factory
+ * Chart Data Source
  */
-var ChartFactory = (function() {
+
+var ChartDataApi = (function(endPoint) {
+
+    function _getBudgetData() {
+
+        if (!endPoint) {
+            return new Promise(function(resolve, reject) {
+                var data  = {"BIDValues": ["5897", "215923", "100131", "275363", "43358", "4868", "132979", "39238", "931169", "870", "55788", "942583", "992460", "7354", "305551", "13714", "39000", "30000", "104493", "806182", "706169", "8405", "39707", "58642"], 
+               "Values": 
+                ["58197", "115923", "200131", "275563", "343358", "394868", "432979", "439238", "431169", "458870", "455788", "425983", "392460", "387354", "395551", "383714", "395837", "388527", "304493", "206182", "106169", "58405", "39707", "38642"]
+              };
+                resolve(data);
+            });
+        }
+
+    }
+
+    return {
+        getData : _getBudgetData
+    }
+    
+})();
+
+
+/**
+ * Chart factory
+ */
+var ChartFactory = (function(dataSource) {
 
     function _themify() {
         Highcharts.theme = {
@@ -309,9 +337,13 @@ var ChartFactory = (function() {
                 allowDecimals: false,
                 labels: {
                     formatter: function () {
-                        return this.value; // clean, unformatted number for year
+                        if (this.value < 10) {
+                            return '0'+this.value+":00";
+                        }
+                        return this.value+ ":00"; // clean, unformatted number for year
                     }
-                }
+                },
+                tickInterval: 1
             },
             yAxis: {
                 title: {
@@ -338,6 +370,12 @@ var ChartFactory = (function() {
                                 enabled: true
                             }
                         }
+                    }
+                },
+                series: {
+                    marker: {
+                        enabled: true,
+                        radius: 5
                     }
                 }
             },
@@ -369,7 +407,12 @@ var ChartFactory = (function() {
     }
 
     function _render(ctr, config) {
-        Highcharts.chart(ctr, config);
+        dataSource.then(function(chartData) {
+            console.log(chartData);
+            var chart = Highcharts.chart(ctr, config);
+            chart.series[1].setData(chartData.BIDValues.map(function(val){ return parseInt(val);}));
+            chart.series[0].setData(chartData.Values.map(function(val){ return parseInt(val);}));
+        })
     }
 
     return {
@@ -377,4 +420,5 @@ var ChartFactory = (function() {
         render: _render
     }
 
-})();
+})(ChartDataApi.getData());
+
