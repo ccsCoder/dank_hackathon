@@ -2,6 +2,7 @@
 
 const DATA_END_POINT = 'https://dev-dsk-singhzns-2b-b8458a0d.us-west-2.amazon.com:8443/hackathon';
 
+
 var timelineData = [{
       time: '00',
       budget: '1000'
@@ -74,31 +75,6 @@ var timelineData = [{
     }
 ];
 
-var TimeLine = (function(container) {
-
-    ChartDataApi.getData().then(function(data) {
-
-            var timelineData = [];
-            var budgetData = data.BudgetBuckets;        
-            for (var i = 0; i < 24; i++) {
-                var obj = {};
-                obj.time = i + "";
-                obj.budget = budgetData[i] + "";
-                timelineData.push(obj);
-            }
-            var hourTemplate = $('#timeline-template').html();
-            hourTemplate = hourTemplate.trim();
-            
-            var template = Handlebars.compile(hourTemplate);
-
-            $(container).html(
-                template({"timelineData": timelineData})
-            );
-        })
-
-})($('#timeline'));
-
-
 /**
  * Chart Data Source
  */
@@ -128,6 +104,35 @@ var ChartDataApi = (function(endPoint) {
     }
     
 })(DATA_END_POINT);
+
+var TimeLine = (function(container) {
+
+    ChartDataApi.getData().then(function(data) {
+
+            var timelineData = [];
+            var budgetData = data.BudgetBuckets;
+
+            budgetData.forEach(function(budgetDatum, index) {
+                timelineData.push({
+                    time: index,
+                    budget: budgetDatum
+                });
+            })
+            
+            var hourTemplate = $('#timeline-template').html();
+            hourTemplate = hourTemplate.trim();
+            
+            var template = Handlebars.compile(hourTemplate);
+
+            $(container).html(
+                template({"timelineData": timelineData})
+            );
+        })
+
+})($('#timeline'));
+
+
+
 
 var dataPromise = ChartDataApi.getData();
 /**
