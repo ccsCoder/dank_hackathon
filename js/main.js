@@ -347,7 +347,18 @@ var ChartFactory = (function(dataSource) {
             subtitle: {
                 text: 'Historical vs Predictive Data'
             },
-            xAxis: {
+            xAxis:
+            // [{
+            //     gridLineWidth: 0,
+            //     categories: [
+            //         '00:00', '01:00', '02:00', '03:00', 
+
+            //     ]
+
+            // }, {
+
+            // }],
+            {
                 allowDecimals: false,
                 labels: {
                     formatter: function () {
@@ -363,7 +374,8 @@ var ChartFactory = (function(dataSource) {
                     color: 'gray',
                     dashStyle: 'shortdot'
                 }
-            },
+            }
+            ,
             yAxis: {
                 title: {
                     text: 'Budget Value'
@@ -441,31 +453,23 @@ var ChartFactory = (function(dataSource) {
         };
     }
 
-    function _updateGhostSeries(colorArray, predictedClicks) {
-        var mappedValues = colorArray.map(function(colorItem) {
-            if (colorItem === 'g' )  {
+    function _updateGhostSeries(colorArray, x, predictedClicks) {
+
+        var mappedData = colorArray.map(function(colorItem, index) {
+            if( colorItem === 'g') {
                 return 0;
             } else {
-                var prevInterval = Math.floor(colorArray.length / 10);
-                var nextInterval = Math.ceil(colorArray.length / 10);
-                var avgPerInterval = Math.abs((predictedClicks[nextInterval] * 100) - (predictedClicks[prevInterval] * 100));
-                
-                return avgPerInterval * Math.abs(prevInterval - (colorArray.length / 10.0));
-                // return predictedClicks[index] * 100;
+                return predictedClicks[index]*100;
             }
         });
 
-        console.log('====================================');
-        console.log(mappedValues);
-        console.log('====================================');
-
-        chartRef.series[2].setData(mappedValues);
+        console.log(mappedData);
+        chartRef.series[2].setData(mappedData);
     }
 
-    function _updateInGhostSeries(colorArray) {
-        console.log(colorArray.length);
+    function _updateInGhostSeries(colorArray, length) {
         dataSource.then(function (data) {
-            _updateGhostSeries(colorArray, data.ClicksPercent);
+            _updateGhostSeries(colorArray, length -1, data.ClicksPercent);
         });
     }
 
@@ -683,9 +687,12 @@ var GenerateColorArrayTask = (function() {
     var colorArray = [];
 
     function _colorArray(color) {
-        console.log("from _colorArray"+ colorArray.length);
         colorArray.push(color);
-        ChartFactory.updateGhostSeries(colorArray);
+
+        if (colorArray.length % 10) {
+            ChartFactory.updateGhostSeries(colorArray, colorArray.length);
+        }
+        
     }
 
     function _getColorAtPosition(position) {
