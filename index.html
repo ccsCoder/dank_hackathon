@@ -9,20 +9,20 @@
     <!-- Scripts -->
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.1.0/handlebars.js"></script>
-    <script src="http://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="http://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/modules/draggable-points.js"></script>
 
     <script type="text/x-handlebars-template" id="timeline-template">
         {{#each timelineData}}
             <li class="hour">
-                <input class="radio" type="radio" checked>
-                <div class="relative">
-                    <label class="default-hidden">Edit Allocation</label>
+                <input class="radio" type="radio" checked >
+                <div class="relative {{this.time}} " time_data_value = "{{this.time}}">
+                    
                     <span class="date">{{this.time}}</span>
                     <span class="circle"></span>
                 </div>
-                <div class="content budget-editor-content default-hidden">
+                <div  class="content budget-editor-content default-hidden shows {{this.time}}">
                     <div class="form-editor">
                     <button class="step-button decrement">-</button>
                     <div class="budget-input">{{this.budget}}</div>
@@ -40,18 +40,21 @@
     <div class="container">
         <div class="graph-container">
             <div id="budgetTrendChartContainer" class="charts-container"></div>
+            <div class="actions-button" id="actions-button">&#x21e7;</div>
         </div>
-
+        <div class="budget-container" id="timeline-container">
+            <ul id="timeline" class="timeline-container">
+            </ul>
+        </div>
     </div>
-    <!-- <ul id="timeline" class="timeline-container">
-    </ul> -->
+    
 
     <script src="js/main.js"></script>
     <script>
         $(function() {
             var chartConfig = ChartFactory.configure();
             ChartFactory.render('budgetTrendChartContainer', chartConfig);
-            
+            bindEvents();
         })
     </script>
 </body>

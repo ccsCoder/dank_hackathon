@@ -35,14 +35,16 @@
   * ------------------------------------- */
  #timeline {
    list-style: none;
-   margin: 120px 0 0;
+   /* margin: 120px 0 0; */
    padding: 0;
-   border-top: 8px solid #eee9dc;
+   border-top: 2px solid #eee9dc;
    display: table;
    border-spacing: 30px 0;
+   max-width: 95%;
  }
  #timeline li {
    display: table-cell;
+   width: 100px;
  }
  #timeline li .relative {
    position: relative;
@@ -63,29 +65,30 @@
  
  .circle {
    margin: 0 auto;
-   top: -14px;
+   top: -10px;
    left: 0;
    right: 0;
    width: 10px;
    height: 10px;
    background: #424242;
-   border: 5px solid #eee9dc;
+   border: 3px solid #eee9dc;
    border-radius: 50%;
    display: block;
    position: absolute;
+   cursor: pointer;
  }
  
  .content {
-   width: 200px;
+   width: 100px;
    max-height: 0;
-   margin-top: 40px;
+   margin-top: 15px;
    vertical-align: top;
-   padding: 50px 15px 15px;
-   transition: width 0.4s linear, max-height 0.4s linear;
+   padding: 10px 10px 10px;
    border-width: 2px;
    border-style: solid;
    border-radius: 0.5em;
    position: relative;
+   transition: display 2s;
  }
  .content:before, .content:after {
    content: "";
@@ -141,7 +144,7 @@
    transition: width 0.3s linear 0.2s;
  }
  .radio:checked + .relative .circle {
-   background: #f98262;
+   background: #f45b5b;
  }
  .radio:checked ~ .content {
    max-height: 180px;
@@ -186,22 +189,10 @@
    font-size: 20px;
    
  }
- 
- 
- /** common styles **/
-
-.timeline-container {
-    width: 95%;
-    max-width: 95%;
-    display: flex;
-    overflow-x: auto;
-    overflow-y: hidden;
-}
 
 .default-hidden {
-    display:none;
-}
-
+    display:none
+} 
 
 .container {
     display: flex;
@@ -217,19 +208,41 @@
 .container > .graph-container {
     padding: 10px;
     width: 100%;
-    height: 80%;
+    height: 90%;
     margin:5px;
-    /* border-bottom: 1px solid white; */
     box-sizing: border-box;
+    transition: height 0.5s;
 }
 
 .container > .budget-container {
     padding: 10px;
     width: 100%;
-    height: 20%;
+    height: 30%;
     margin:5px;
-    /* border-bottom: 1px solid white; */
     box-sizing: border-box;
+    display: flex;
+    justify-content:center;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px;
+    /* transition: height 1s; */
+
+}
+ #timeline-container.budget-container {
+    display: none;
+}
+
+ #actions-button {
+    position: relative;
+    /* top: -90px; */
+    font-size: larger;
+    color: #FF9900;
+    text-align: center;
+    cursor:pointer;
+}
+
+#actions-button:hover {
+    transform: scale(1.3);
 }
 
 .charts-container {

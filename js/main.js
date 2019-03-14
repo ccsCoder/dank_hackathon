@@ -128,6 +128,8 @@ var ChartFactory = (function(dataSource) {
         showTooltips: true
     };
 
+    var chartRef = null;
+
     function _themify() {
         Highcharts.theme = {
             colors: ['#2b908f', '#90ee7e', '#f45b5b', '#7798BF', '#aaeeee', '#ff0066',
@@ -442,22 +444,16 @@ var ChartFactory = (function(dataSource) {
     function _render(ctr, config) {
         dataSource.then(function(chartData) {
 
-            var chart = Highcharts.chart(ctr, config);
-            // chart.addSeries({
-            //     type: 'area',
-            //     data: chartData.PredictedClicks.map(function(val){ return parseInt(val);}),
-            //     color: '#90ee7e',
-            //     name: "Predicted Clicks"
-            // });
+            chartRef = Highcharts.chart(ctr, config);
 
-            chart.addSeries({
+            chartRef.addSeries({
                 type: 'line',
                 data: chartData.BudgetBuckets.map(function(val){  return parseInt(val) /100;}),
                 color: "#90ee7e",
                 name: "Predicted Budget"
             });
 
-            chart.addSeries({
+            chartRef.addSeries({
                 type: 'area',
                 data: chartData.ClicksPercent.map(function(val) { return Math.round(val* 100.0, 2); }),
                 name: "Predicted Click Percentage"
@@ -468,7 +464,8 @@ var ChartFactory = (function(dataSource) {
 
     return {
         configure: _configure,
-        render: _render
+        render: _render,
+        getChartRef: function() { return chartRef; }
     }
 
 })(dataPromise);
@@ -580,3 +577,49 @@ function runTask() {
 
 //Run the task
 runTask();
+
+
+
+function bindEvents() {
+    ///******** Timeline  *******///
+    $(".circle" ).click(function() {
+        var id = ($(this).parent().attr("time_data_value"));
+        $(".default-hidden").hide(); 
+        $(".content").hide();
+        var Editable = 'contenteditable';
+        $('.budget-input').attr(Editable, true);
+        var elements = document.getElementsByClassName(id);
+        for (var i = 0; i < elements.length; i++){
+          elements[i].style.display = 'block';
+      }
+      });
+      
+      $(".decrement").click(function() {
+        var sel = $(this).closest('div').find('.budget-input');
+        var new_value = sel.html(function(i, val) { return +val-100 });
+      });
+      
+      $(".increment").click(function() {
+        var sel = $(this).closest('div').find('.budget-input');
+        var new_value = sel.html(function(i, val) { return +val+100 });
+      });
+    
+    
+      //Collapse, expand the containers as needed.
+      $('#actions-button').on('click', function() {
+        
+            $(this).hide();
+        // if($(this).hasClass("up")) {
+            $(this).removeClass("up").addClass("down");
+            $(".graph-container").css('height', '70%');
+            $("#timeline-container").slideToggle(500, function() {
+                $(this).css("display", "flex");
+                $('#action-button').toggleClass("down");
+
+                ChartFactory.getChartRef().reflow();
+            });
+        // }
+        
+      });
+} 
+
