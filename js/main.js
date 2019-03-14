@@ -74,18 +74,29 @@ var timelineData = [{
     }
 ];
 
-var TimeLine = (function(data, container) {
-    
-    var hourTemplate = $('#timeline-template').html();
-    hourTemplate = hourTemplate.trim();
-    
-    var template = Handlebars.compile(hourTemplate);
+var TimeLine = (function(container) {
 
-    $(container).html(
-        template({"timelineData": data})
-    );
+    ChartDataApi.getData().then(function(data) {
 
-})(timelineData, $('#timeline'));
+            var timelineData = [];
+            var budgetData = data.BudgetBuckets;        
+            for (var i = 0; i < 24; i++) {
+                var obj = {};
+                obj.time = i + "";
+                obj.budget = budgetData[i] + "";
+                timelineData.push(obj);
+            }
+            var hourTemplate = $('#timeline-template').html();
+            hourTemplate = hourTemplate.trim();
+            
+            var template = Handlebars.compile(hourTemplate);
+
+            $(container).html(
+                template({"timelineData": timelineData})
+            );
+        })
+
+})($('#timeline'));
 
 
 /**
@@ -611,7 +622,7 @@ var  TickerTask = (function(generateColorArrayTask) {
         
         var isPositive = Math.random() > 0.5;
         var negativeUncertainty = 1;
-        var PositiveUncertainty = 5;
+        var PositiveUncertainty = 2.5;
 
         if (isPositive) {
             return Math.ceil((budgetDataCurrentHour/10) + (budgetDataCurrentHour/10) * PositiveUncertainty * Math.random());
@@ -687,6 +698,7 @@ var GenerateColorArrayTask = (function() {
     var colorArray = [];
 
     function _colorArray(color) {
+        console.log("color array:" + colorArray);
         colorArray.push(color);
 
         if (colorArray.length % 10) {
