@@ -97,28 +97,28 @@ var ChartDataApi = (function(endPoint) {
     function _getBudgetData() {
 
         // if (!endPoint) {
-            // return new Promise(function(resolve, reject) {
-            //     var data  = {"historicalClicks": ["5897", "215923", "100131", "275363", "43358", "4868", "132979", "39238", "931169", "870", "55788", "942583", "992460", "7354", "305551", "13714", "39000", "30000", "104493", "806182", "706169", "8405", "39707", "58642"], 
-            //    "predictedClicks": 
-            //     ["58197", "115923", "200131", "275563", "343358", "394868", "432979", "439238", "431169", "458870", "455788", "425983", "392460", "387354", "395551", "383714", "395837", "388527", "304493", "206182", "106169", "58405", "39707", "38642"],
-            //     "spend": [],
-            //     "actualClicks": []
+            return new Promise(function(resolve, reject) {
+                var data  = {"historicalClicks": ["5897", "215923", "100131", "275363", "43358", "4868", "132979", "39238", "931169", "870", "55788", "942583", "992460", "7354", "305551", "13714", "39000", "30000", "104493", "806182", "706169", "8405", "39707", "58642"], 
+               "predictedClicks": 
+                ["58197", "115923", "200131", "275563", "343358", "394868", "432979", "439238", "431169", "458870", "455788", "425983", "392460", "387354", "395551", "383714", "395837", "388527", "304493", "206182", "106169", "58405", "39707", "38642"],
+                "spend": [],
+                "actualClicks": []
 
-            //   };
-            //     resolve(data);
-            // });
+              };
+                resolve(data);
+            });
         // } else {
-            return fetch(endPoint, {
-                headers: {
-                    "Access-Control-Allow-Origin": "*"
-                }
-            })
-                .then(function(data) {
-                    return data;
-                })
-                .catch(function() {
-                    alert("Something went wrong!");
-                });
+            // return fetch(endPoint, {
+            //     headers: {
+                    
+            //     }
+            // })
+            //     .then(function(data) {
+            //         return data;
+            //     })
+            //     .catch(function() {
+            //         alert("Something went wrong!");
+            //     });
         // }
 
     }
@@ -348,7 +348,7 @@ var ChartFactory = (function(dataSource) {
         _themify();
         return {
             chart: {
-                type: 'area'
+                // type: 'area'
             },
             title: {
                 text: 'Budget Pacing Trend(s)'
@@ -366,7 +366,12 @@ var ChartFactory = (function(dataSource) {
                         return this.value+ ":00"; // clean, unformatted number for year
                     }
                 },
-                tickInterval: 1
+                tickInterval: 1,
+                crosshair: {
+                    width: 2,
+                    color: 'gray',
+                    dashStyle: 'shortdot'
+                }
             },
             yAxis: {
                 title: {
@@ -438,11 +443,7 @@ var ChartFactory = (function(dataSource) {
                 }
                 
             },
-            series: [{
-                name: 'Current'
-            }, {
-                name: 'Predicted'
-            }]
+            series: []
         };
     }
 
@@ -451,9 +452,20 @@ var ChartFactory = (function(dataSource) {
             // debugger;
 
             var chart = Highcharts.chart(ctr, config);
-            chart.series[1].setData(chartData.historicalClicks.map(function(val){ return parseInt(val);}));
-            chart.series[0].setData(chartData.predictedClicks.map(function(val){ return parseInt(val);}));
-            // debugger;
+            chart.addSeries({
+                type: 'area',
+                data: chartData.historicalClicks.map(function(val){ return parseInt(val);}),
+                color: '#90ee7e',
+                name: "Predited Clicks"
+            });
+
+            chart.addSeries({
+                type: 'line',
+                data: chartData.predictedClicks.map(function(val){ return parseInt(val);}),
+                color: "#DF5353",
+                name: "Predicted Budget"
+            });
+
         })
     }
 
@@ -463,4 +475,3 @@ var ChartFactory = (function(dataSource) {
     }
 
 })(ChartDataApi.getData());
-
