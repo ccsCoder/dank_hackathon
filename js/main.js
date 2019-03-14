@@ -471,11 +471,55 @@ var ChartFactory = (function(dataSource) {
 })(dataPromise);
 
 
+var UserOverride = (function(chartRef, budgetData){
+
+    var buffer = 0;
+
+    function _increaseBudgetToBucket(hour, budgetToBeIncreased) {
+        
+        console.log("Increasing budget:" + budgetToBeIncreased + " to bucket:" + hour);
+        if (budgetToBeIncreased <= buffer) {
+            buffer -= budgetToBeIncreased;
+            budgetData[hour] += budgetToBeIncreased;
+            budgetSeriesData[hour] = budgetData[hour];
+        }
+        console.log("buffer:" + buffer + " bucketBudget:" + budgetData[hour] + " for hour:" + hour);
+    }
+
+    function _updateChart(hour, budget) {
+
+        var budgetSeriesData = chartRef.getSeries(0).getData();
+        budgetSeriesData[hour] = budget;
+        chartRef.getSeries(0).setData(budgetSeriesData);
+    }
+
+    function _decreaseBudgetFromBucket(hour, budgetToBeDecreased) {
+        
+        console.log("Decreasing budget:" + budgetToBeDecreased + " to bucket:" + hour);
+        if (budgetToBeDecreased <= budgetData[hour]) {
+            buffer += budgetToBeDecreased;
+            budgetData[hour] -= budgetToBeDecreased;
+            _updateChart(hour, budgetData[hour]);
+        }
+        console.log("buffer:" + buffer + " bucketBudget:" + budgetData[hour] + " for hour:" + hour);
+    }
+
+    function _getBuffer() {
+        return buffer;
+    }
+
+    return{
+        getBuffer: _getBuffer,
+        increaseBudgetToBucket: _increaseBudgetToBucket,
+        decreaseBudgetFromBucket : _decreaseBudgetFromBucket
+    }
+});
+
 /******* TIMER RELATED DATA *******/
 
 /** Ticker **/
 
-var Timer = (function(task, tickDuration, ticksInOneHour, generateColorArrayTask) {
+var Timer = (function(task, tickDuration, ticksInOneHour) {
 
     var totalElapsed = 0;
     var currHours = 0;
@@ -516,6 +560,7 @@ var Timer = (function(task, tickDuration, ticksInOneHour, generateColorArrayTask
 var  TickerTask = (function(generateColorArrayTask) {
     
     var residualBudget = 0;
+    var budgetDataCurrentHour = 0;
     
     function _doTask(currHour, timeElapsed) {
         dataPromise.then(function(data) {
@@ -525,15 +570,16 @@ var  TickerTask = (function(generateColorArrayTask) {
         });
     }
 
-    function _getSpend(budgetData, hour) {
+    function _getSpend(hour) {
         
         var isPositive = Math.random() > 0.5;
-        var uncertainty = 0.4;
+        var negativeUncertainty = 1;
+        var PositiveUncertainty = 5;
 
         if (isPositive) {
-            return Math.ceil((budgetData[hour]/10) + (budgetData[hour]/10) * uncertainty * Math.random());
+            return Math.ceil((budgetDataCurrentHour/10) + (budgetDataCurrentHour/10) * PositiveUncertainty * Math.random());
         } else {
-            return Math.floor((budgetData[hour]/10) - (budgetData[hour]/10) * uncertainty * Math.random());
+            return Math.floor((budgetDataCurrentHour/10) - (budgetDataCurrentHour/10) * negativeUncertainty * Math.random());
         }
     }
 
@@ -543,6 +589,7 @@ var  TickerTask = (function(generateColorArrayTask) {
         // Redistribute budget if this is the begining of the hour
         if (timeElapsed === 0) {
             console.log("begining of hour:" + currHour);
+            budgetDataCurrentHour = budgetData[currHour];
             _redistributeResidualBudget(budgetData, predictedClicks, currHour);
         }
 
