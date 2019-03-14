@@ -471,112 +471,172 @@ var ChartFactory = (function(dataSource) {
 })(dataPromise);
 
 
+/******* TIMER RELATED DATA *******/
+
 /** Ticker **/
 
-var Timer = (function(task, tickDuration) {
-    var interValID = null;
-    var totalElapsed = 0;
+var Timer = (function(task, tickDuration, ticksInOneHour, generateColorArrayTask) {
 
+    var totalElapsed = 0;
+    var currHours = 0;
+
+    var budgetFinishedEvent = new Event('budgetFinished');
+    var hourFinishedEvent = new Event('hourFinished');
     
 
     function _tick() {
-        task();
+        console.log('TICK HOUR:' + currHours + ' ELAPSED_TIME:' + totalElapsed);
+        task(currHours, totalElapsed);
         totalElapsed += tickDuration;
+        if (totalElapsed === ticksInOneHour) {
+            console.log("Hour:" + currHours + " is over!");
+            totalElapsed = 0;
+            currHours++;
+        }
+        if (currHours === 24) {
+            console.log("Day over");
+            document.dispatchEvent(budgetFinishedEvent);
+        }
     }
 
     function _stop() {
-        console.log('stopped');
+        console.log('STOP');
     }
 
     return {
         tick: _tick,
-        getElapsed: function() { return totalElapsed; }
+        getElapsed: function() { return totalElapsed; },
+        getCurrentHour: function() { return currHours;}
     }
 });
 
 
 
 
-var  TickerTask = (function() {
-    var currHours = 0;
-    // var spends = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 3000, 4000, 1300 ];
-    // var clickPercentages = [2, 5, 7, 4, 1, 2, 3.5, 2.5, 5, 2.5, 3.3, 8.2, 6.1, 4.8, 8.1, 2, 4, 0.9, 4.1, 1, 7, 2, 0.1, 3.9, 5, 5 ];
-    var residualBudget = null;
-
-    var budgetFinishedEvent = new Event('budgetFinished');
+var  TickerTask = (function(generateColorArrayTask) {
     
-    function _doTask() {
+    var residualBudget = 0;
+    
+    function _doTask(currHour, timeElapsed) {
         dataPromise.then(function(data) {
             var budgetData = data.BudgetBuckets;
-            _perform(budgetData);
-    
+            var predictedClicks = data.PredictedClicks;
+            _perform(budgetData, predictedClicks, currHour, timeElapsed);
         });
     }
 
+    function _getSpend(budgetData, hour) {
+        
+        var isPositive = Math.random() > 0.5;
+        var uncertainty = 0.4;
 
-    function _getSpend(budget) {
-        return Math.floor(Math.random() * (budget * 1.2)) + 100;  
+        if (isPositive) {
+            return Math.ceil((budgetData[hour]/10) + (budgetData[hour]/10) * uncertainty * Math.random());
+        } else {
+            return Math.floor((budgetData[hour]/10) - (budgetData[hour]/10) * uncertainty * Math.random());
+        }
     }
 
 
-    function _perform(budgetData) {
-        var currBudget = currHours === 23 ? budgetData[0] : budgetData[currHours + 1];
-        currBudget = parseInt(currBudget);
-        var currSpend = _getSpend(currBudget);
-        
-            if (residualBudget > 0 || residualBudget === null) {
-                residualBudget = currBudget - currSpend;
-            } else {
-                //budget has finished now.
-                budgetFinishedEvent.budgetData = {
-                    hour: currHours,
-                    residualBudget: residualBudget,
-                    currentBudget: currBudget
-                }
-                document.dispatchEvent(budgetFinishedEvent);
+    function _perform(budgetData, predictedClicks, currHour, timeElapsed) {
 
-                console.log('Curr Budget:' + currBudget);
-                console.log('Spend:' + currSpend);
-                console.log('Residual:' + residualBudget);
-                
-                //cleanup variables
-                residualBudget = null;
-                currHours = currHours === 23 ? 0: (currHours + 1);
-                
+        // Redistribute budget if this is the begining of the hour
+        if (timeElapsed === 0) {
+            console.log("begining of hour:" + currHour);
+            _redistributeResidualBudget(budgetData, predictedClicks, currHour);
+        }
+
+        var currBudget = budgetData[currHour];
+        currBudget = parseInt(currBudget);
+        var currSpend = _getSpend(budgetData, currHour);
+
+        console.log('Spend:' + currSpend);
+
+        var remainingBudget = currBudget - currSpend;
+        remainingBudget < 0 ? generateColorArrayTask.colorArray("r") : generateColorArrayTask.colorArray("g");
+        currBudget = remainingBudget;
+        budgetData[currHour] = currBudget;
+
+        _updateResidualBudget(remainingBudget);
+    }
+
+    function _updateResidualBudget(remainingBudget) {
+        residualBudget = remainingBudget > 0 ? remainingBudget : 0;
+        console.log("updating residualBudget with value: " + residualBudget);
+    }
+
+    // Redistributes residual budget starting from currHour inclusive
+    function _redistributeResidualBudget(budgetData, predictedClicks, currHour) {
+
+        console.log("redistributing residualBudget budget:" + residualBudget);
+        console.log("budgetData before redistribution:" + budgetData);
+
+        var clicksPercents = [];
+        var totalClicks = 0;
+        for (var i = 0 ; i < 24 ; i++) {
+            if (i >= currHour) {
+                totalClicks += predictedClicks[i];
             }
+        }
+        for (var i = 0 ; i < 24 ; i++) {
+            if (i < currHour) {
+                clicksPercents.push(1);
+            } else {
+                clicksPercents.push(predictedClicks[i]/totalClicks);
+            }
+        }
+        for (var i = currHour ; i < 24 ; i++) {
+            budgetData[i] += residualBudget * clicksPercents[i];
+        }
+        _updateResidualBudget(0);
+        console.log("budgetData after redistribution:" + budgetData);
     }
 
     return {
         doTask: _doTask
     }
 
-}); 
+});
+
+var GenerateColorArrayTask = (function(){
+
+    var colorArray = [];
+
+    function _colorArray(color) {
+        colorArray.push(color);
+    }
+
+    function _getColorAtPosition(position) {
+        return colorArray[position];
+    }
+
+    return {
+        colorArray: _colorArray,
+        getColorAtPosition: _getColorAtPosition
+    }
+});
+
 
 
 //Task Runner
 function runTask() {
-    var tickerTask = TickerTask();
-    var timer = Timer(tickerTask.doTask, 20);
 
-    //right arrow key
-    $(document).on('keyup', function(e) {
+    var generateColorArrayTask = GenerateColorArrayTask();
+    var tickerTask = TickerTask(generateColorArrayTask);
+    var timer = Timer(tickerTask.doTask, 10, 100);
+
+     //right arrow key
+     $(document).on('keyup', function(e) {
         if (e.which === 39) {
             timer.tick();
         }
     });
-
-    $(document).on('budgetFinished', function(e) {
-        console.log('====================================');
-        console.log('Budget Over !');
-        console.dir(e.budgetData);
-        console.log('====================================');
-    });
-    
-
 }
 
 //Run the task
 runTask();
+
+/****** TIMER RELATD ENDS ********/
 
 
 
@@ -587,11 +647,11 @@ function bindEvents() {
         $(".default-hidden").hide(); 
         $(".content").hide();
         var Editable = 'contenteditable';
-        $('.budget-input').attr(Editable, true);
+        $('.budget-input').attr(Editable, true).click();
         var elements = document.getElementsByClassName(id);
         for (var i = 0; i < elements.length; i++){
           elements[i].style.display = 'block';
-      }
+        }
       });
       
       $(".decrement").click(function() {
@@ -609,7 +669,6 @@ function bindEvents() {
       $('#actions-button').on('click', function() {
         
             $(this).hide();
-        // if($(this).hasClass("up")) {
             $(this).removeClass("up").addClass("down");
             $(".graph-container").css('height', '70%');
             $("#timeline-container").slideToggle(500, function() {
@@ -618,8 +677,19 @@ function bindEvents() {
 
                 ChartFactory.getChartRef().reflow();
             });
-        // }
-        
       });
+
+     
+
+    $(document).on('budgetFinished', function(e) {
+        console.log('====================================');
+        console.log('Simulation Over !');
+        console.dir(e.budgetData);
+        console.log('====================================');
+    });
+
+    //   $(".budget-editor-content").on('blur', function() {
+    //       $(this).fadeOut(500);
+    //   })
 } 
 
