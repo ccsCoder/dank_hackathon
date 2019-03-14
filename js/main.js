@@ -98,29 +98,18 @@ var ChartDataApi = (function(endPoint) {
 
         // if (!endPoint) {
             return new Promise(function(resolve, reject) {
-                var data  = {"historicalClicks": ["5897", "215923", "100131", "275363", "43358", "4868", "132979", "39238", "931169", "870", "55788", "942583", "992460", "7354", "305551", "13714", "39000", "30000", "104493", "806182", "706169", "8405", "39707", "58642"], 
-               "predictedClicks": 
-                ["58197", "115923", "200131", "275563", "343358", "394868", "432979", "439238", "431169", "458870", "455788", "425983", "392460", "387354", "395551", "383714", "395837", "388527", "304493", "206182", "106169", "58405", "39707", "38642"],
-                "spend": [],
-                "actualClicks": []
 
-              };
+                var data = {
+                    "BudgetBuckets": [229, 460, 802, 1080, 1349, 1578, 1722, 1747, 1709, 1796, 1785, 1652, 1512, 1409, 1591, 1573, 1631, 1589, 1046, 798, 408, 224, 153, 145], 
+                    "ClicksPercent": 
+                        [0.00821281760617407, 0.016439948244077268, 0.02867759037248234, 0.038596521360768556, 0.04820056565101394, 0.05636185634296314, 0.06150595994641201, 0.06241054355169295, 0.061050805537425715, 0.064151008209955, 0.0637845945976893, 0.05902980545727274, 0.05402024435207768, 0.05034752041038325, 0.05683418639002439, 0.0562130008129802, 0.058251176531208135, 0.05676262123137875, 0.03737418845110096, 0.028525872236153573, 0.01457352890659888, 0.008009572555620442, 0.0054818911522563065, 0.005184180092290429], 
+                    "PredictedClicks": 
+                        [2869, 5743, 10018, 13483, 16838, 19689, 21486, 21802, 21327, 22410, 22282, 20621, 18871, 17588, 19854, 19637, 20349, 19829, 13056, 9965, 5091, 2798, 1915, 1811], 
+                    "TotalBudget": 2800
+                };
+
                 resolve(data);
             });
-        // } else {
-            // return fetch(endPoint, {
-            //     headers: {
-                    
-            //     }
-            // })
-            //     .then(function(data) {
-            //         return data;
-            //     })
-            //     .catch(function() {
-            //         alert("Something went wrong!");
-            //     });
-        // }
-
     }
 
     return {
@@ -129,7 +118,7 @@ var ChartDataApi = (function(endPoint) {
     
 })(DATA_END_POINT);
 
-
+var dataPromise = ChartDataApi.getData();
 /**
  * Chart factory
  */
@@ -379,18 +368,21 @@ var ChartFactory = (function(dataSource) {
                 },
                 labels: {
                     formatter: function () {
-                        return this.value / 1000 + 'k INR';
+                        return this.value ;
                     }
                 }
             },
             tooltip: {
-                // pointFormat: '{series.name} has allocated <b>{point.y:,.0f}</b><br/>k INR at {point.x}',
                 shared: false,
                 formatter: function() {
                     if (statusFlags.showTooltips === false ) {
                         return false;
-                    } else {
-                        return this.series.name + ' : '+ this.y; 
+                    } 
+                    else if (this.series.name === "Predicted Budget") {
+                        return this.series.name+ ': ' + this.y * 100;
+                    }
+                    else {
+                        return this.series.name + ': '+ this.y + '%';
                     }
                 }
             },
@@ -449,21 +441,26 @@ var ChartFactory = (function(dataSource) {
 
     function _render(ctr, config) {
         dataSource.then(function(chartData) {
-            // debugger;
 
             var chart = Highcharts.chart(ctr, config);
-            chart.addSeries({
-                type: 'area',
-                data: chartData.historicalClicks.map(function(val){ return parseInt(val);}),
-                color: '#90ee7e',
-                name: "Predited Clicks"
-            });
+            // chart.addSeries({
+            //     type: 'area',
+            //     data: chartData.PredictedClicks.map(function(val){ return parseInt(val);}),
+            //     color: '#90ee7e',
+            //     name: "Predicted Clicks"
+            // });
 
             chart.addSeries({
                 type: 'line',
-                data: chartData.predictedClicks.map(function(val){ return parseInt(val);}),
-                color: "#DF5353",
+                data: chartData.BudgetBuckets.map(function(val){  return parseInt(val) /100;}),
+                color: "#90ee7e",
                 name: "Predicted Budget"
+            });
+
+            chart.addSeries({
+                type: 'area',
+                data: chartData.ClicksPercent.map(function(val) { return Math.round(val* 100.0, 2); }),
+                name: "Predicted Click Percentage"
             });
 
         })
@@ -474,4 +471,112 @@ var ChartFactory = (function(dataSource) {
         render: _render
     }
 
-})(ChartDataApi.getData());
+})(dataPromise);
+
+
+/** Ticker **/
+
+var Timer = (function(task, tickDuration) {
+    var interValID = null;
+    var totalElapsed = 0;
+
+    
+
+    function _tick() {
+        task();
+        totalElapsed += tickDuration;
+    }
+
+    function _stop() {
+        console.log('stopped');
+    }
+
+    return {
+        tick: _tick,
+        getElapsed: function() { return totalElapsed; }
+    }
+});
+
+
+
+
+var  TickerTask = (function() {
+    var currHours = 0;
+    // var spends = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 3000, 4000, 1300 ];
+    // var clickPercentages = [2, 5, 7, 4, 1, 2, 3.5, 2.5, 5, 2.5, 3.3, 8.2, 6.1, 4.8, 8.1, 2, 4, 0.9, 4.1, 1, 7, 2, 0.1, 3.9, 5, 5 ];
+    var residualBudget = null;
+
+    var budgetFinishedEvent = new Event('budgetFinished');
+    
+    function _doTask() {
+        dataPromise.then(function(data) {
+            var budgetData = data.BudgetBuckets;
+            _perform(budgetData);
+    
+        });
+    }
+
+
+    function _getSpend(budget) {
+        return Math.floor(Math.random() * (budget * 1.2)) + 100;  
+    }
+
+
+    function _perform(budgetData) {
+        var currBudget = currHours === 23 ? budgetData[0] : budgetData[currHours + 1];
+        currBudget = parseInt(currBudget);
+        var currSpend = _getSpend(currBudget);
+        
+            if (residualBudget > 0 || residualBudget === null) {
+                residualBudget = currBudget - currSpend;
+            } else {
+                //budget has finished now.
+                budgetFinishedEvent.budgetData = {
+                    hour: currHours,
+                    residualBudget: residualBudget,
+                    currentBudget: currBudget
+                }
+                document.dispatchEvent(budgetFinishedEvent);
+
+                console.log('Curr Budget:' + currBudget);
+                console.log('Spend:' + currSpend);
+                console.log('Residual:' + residualBudget);
+                
+                //cleanup variables
+                residualBudget = null;
+                currHours = currHours === 23 ? 0: (currHours + 1);
+                
+            }
+    }
+
+    return {
+        doTask: _doTask
+    }
+
+}); 
+
+
+//Task Runner
+function runTask() {
+    var tickerTask = TickerTask();
+    var timer = Timer(tickerTask.doTask, 20);
+
+    //right arrow key
+    $(document).on('keyup', function(e) {
+        if (e.which === 39) {
+            timer.tick();
+        }
+    });
+
+    $(document).on('budgetFinished', function(e) {
+        console.log('====================================');
+        console.log('Budget Over !');
+        console.dir(e.budgetData);
+        console.log('====================================');
+    });
+    
+
+}
+
+//Run the task
+runTask();
