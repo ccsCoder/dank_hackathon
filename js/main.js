@@ -441,6 +441,34 @@ var ChartFactory = (function(dataSource) {
         };
     }
 
+    function _updateGhostSeries(colorArray, predictedClicks) {
+        var mappedValues = colorArray.map(function(colorItem) {
+            if (colorItem === 'g' )  {
+                return 0;
+            } else {
+                var prevInterval = Math.floor(colorArray.length / 10);
+                var nextInterval = Math.ceil(colorArray.length / 10);
+                var avgPerInterval = Math.abs((predictedClicks[nextInterval] * 100) - (predictedClicks[prevInterval] * 100));
+                
+                return avgPerInterval * Math.abs(prevInterval - (colorArray.length / 10.0));
+                // return predictedClicks[index] * 100;
+            }
+        });
+
+        console.log('====================================');
+        console.log(mappedValues);
+        console.log('====================================');
+
+        chartRef.series[2].setData(mappedValues);
+    }
+
+    function _updateInGhostSeries(colorArray) {
+        console.log(colorArray.length);
+        dataSource.then(function (data) {
+            _updateGhostSeries(colorArray, data.ClicksPercent);
+        });
+    }
+
     function _render(ctr, config) {
         dataSource.then(function(chartData) {
 
@@ -459,13 +487,21 @@ var ChartFactory = (function(dataSource) {
                 name: "Predicted Click Percentage"
             });
 
+            chartRef.addSeries({
+                type: 'area',
+                data: [],
+                color: '#f45b5b',
+                name: "Ghost",
+                showInLegend: false
+            });
         })
     }
 
     return {
         configure: _configure,
         render: _render,
-        getChartRef: function() { return chartRef; }
+        getChartRef: function() { return chartRef; },
+        updateGhostSeries: _updateInGhostSeries
     }
 
 })(dataPromise);
@@ -475,7 +511,7 @@ var ChartFactory = (function(dataSource) {
 
 /** Ticker **/
 
-var Timer = (function(task, tickDuration, ticksInOneHour, generateColorArrayTask) {
+var Timer = (function(task, tickDuration, ticksInOneHour) {
 
     var totalElapsed = 0;
     var currHours = 0;
@@ -510,9 +546,6 @@ var Timer = (function(task, tickDuration, ticksInOneHour, generateColorArrayTask
     }
 });
 
-
-
-
 var  TickerTask = (function(generateColorArrayTask) {
     
     var residualBudget = 0;
@@ -527,13 +560,14 @@ var  TickerTask = (function(generateColorArrayTask) {
 
     function _getSpend(budgetData, hour) {
         
-        var isPositive = Math.random() > 0.5;
-        var uncertainty = 0.4;
+        var isPositive = Math.random() > 0.2;
+        var negativeUncertainty = 0.2;
+        var positiveUncertainty = 0.8;
 
         if (isPositive) {
-            return Math.ceil((budgetData[hour]/10) + (budgetData[hour]/10) * uncertainty * Math.random());
+            return Math.ceil((budgetData[hour]/10) + (budgetData[hour]/10) * positiveUncertainty * Math.random());
         } else {
-            return Math.floor((budgetData[hour]/10) - (budgetData[hour]/10) * uncertainty * Math.random());
+            return Math.floor((budgetData[hour]/10) - (budgetData[hour]/10) * negativeUncertainty * Math.random());
         }
     }
 
@@ -553,7 +587,7 @@ var  TickerTask = (function(generateColorArrayTask) {
         console.log('Spend:' + currSpend);
 
         var remainingBudget = currBudget - currSpend;
-        remainingBudget < 0 ? generateColorArrayTask.colorArray("r") : generateColorArrayTask.colorArray("g");
+        remainingBudget < 100 ? generateColorArrayTask.colorArray("r") : generateColorArrayTask.colorArray("g");
         currBudget = remainingBudget;
         budgetData[currHour] = currBudget;
 
@@ -598,12 +632,14 @@ var  TickerTask = (function(generateColorArrayTask) {
 
 });
 
-var GenerateColorArrayTask = (function(){
+var GenerateColorArrayTask = (function() {
 
     var colorArray = [];
 
     function _colorArray(color) {
+        console.log("from _colorArray"+ colorArray.length);
         colorArray.push(color);
+        ChartFactory.updateGhostSeries(colorArray);
     }
 
     function _getColorAtPosition(position) {
@@ -612,7 +648,8 @@ var GenerateColorArrayTask = (function(){
 
     return {
         colorArray: _colorArray,
-        getColorAtPosition: _getColorAtPosition
+        getColorAtPosition: _getColorAtPosition,
+        getColorArray: function() { return colorArray; }
     }
 });
 
