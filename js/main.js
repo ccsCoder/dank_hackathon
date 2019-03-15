@@ -402,7 +402,7 @@ var ChartFactory = (function(dataSource) {
                 },
                 labels: {
                     formatter: function () {
-                        return this.value ;
+                        return this.value + 'k';
                     }
                 }
             },
