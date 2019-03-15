@@ -295,3 +295,22 @@
 .loading > .loader-text {
     margin-bottom: 150px;
 }
+
+.metrics-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    
+}
+
+.metrics-table {
+    font-size: smaller;
+    margin-right: 20px;
+}
+
+.metrics-table .label {
+    color: #FF9900;
+}
+.metrics-table .value {
+    color: #eeaaee;
+}

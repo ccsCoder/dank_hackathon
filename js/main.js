@@ -488,9 +488,9 @@ var ChartFactory = (function(dataSource) {
     }
 
     function _updateInGhostSeries(colorArray, length) {
-        dataSource.then(function (data) {
-            _updateGhostSeries(colorArray, length -1, data.ClicksPercent);
-        });
+        // dataSource.then(function (data) {
+        //     _updateGhostSeries(colorArray, length -1, data.ClicksPercent);
+        // });
     }
 
     function _render(ctr, config) {
@@ -511,13 +511,13 @@ var ChartFactory = (function(dataSource) {
                 name: "Predicted Click Percentage"
             });
 
-            chartRef.addSeries({
-                type: 'area',
-                data: [],
-                color: '#f45b5b',
-                name: "Ghost",
-                showInLegend: false
-            });
+            // chartRef.addSeries({
+            //     type: 'area',
+            //     data: [],
+            //     color: '#f45b5b',
+            //     name: "Ghost",
+            //     showInLegend: false
+            // });
         })
     }
 
@@ -645,6 +645,12 @@ var  TickerTask = (function(generateColorArrayTask) {
         }
     }
 
+    function _updateMetrics(budget, spend, status, currHour, minutes) {
+        $('#currentBudget').text( budget);
+        $('#campaignStatus').text( status);
+        $('#spend').text( spend);
+        $("#hour").text(currHour + 'Hrs '+ minutes+" mins");
+    }
 
     function _perform(budgetData, predictedClicks, currHour, timeElapsed) {
 
@@ -662,7 +668,15 @@ var  TickerTask = (function(generateColorArrayTask) {
         console.log('Spend:' + currSpend);
 
         var remainingBudget = currBudget - currSpend;
-        remainingBudget < 100 ? generateColorArrayTask.colorArray("r") : generateColorArrayTask.colorArray("g");
+        remainingBudget < 0 ? generateColorArrayTask.colorArray("r") : generateColorArrayTask.colorArray("g");
+
+        var displayBudget = remainingBudget > 0 ? remainingBudget : 0;
+        var minutes = (timeElapsed/10 + 1)*6;
+
+        var displaySpend = displayBudget > 0 ? currSpend: 0;
+
+        _updateMetrics(displayBudget, displaySpend, (remainingBudget < 0 ? 'Paused' : 'Enabled'),currHour, minutes);
+
         currBudget = remainingBudget;
         budgetData[currHour] = currBudget;
 
