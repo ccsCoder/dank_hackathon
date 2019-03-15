@@ -115,7 +115,7 @@ var TimeLine = (function(container) {
             budgetData.forEach(function(budgetDatum, index) {
                 timelineData.push({
                     time: index,
-                    budget: budgetDatum
+                    budget: (budgetDatum / 100.0)
                 });
             })
             
@@ -527,37 +527,42 @@ var ChartFactory = (function(dataSource) {
 })(dataPromise);
 
 
-var UserOverride = (function(chartRef, budgetData){
+var UserOverride = (function(chartRef){
 
     var buffer = 0;
 
     function _increaseBudgetToBucket(hour, budgetToBeIncreased) {
+        dataPromise.then(function(data) {
+            var budgetData = data.BudgetBuckets;
+            console.log("Increasing budget:" + budgetToBeIncreased + " to bucket:" + hour);
+
+            if (budgetToBeIncreased <= buffer) {
+                buffer -= budgetToBeIncreased;
+                budgetData[hour] += budgetToBeIncreased;
+                budgetSeriesData[hour] = budgetData[hour];
+            }
+            console.log("buffer:" + buffer + " bucketBudget:" + budgetData[hour] + " for hour:" + hour);
+        });
         
-        console.log("Increasing budget:" + budgetToBeIncreased + " to bucket:" + hour);
-        if (budgetToBeIncreased <= buffer) {
-            buffer -= budgetToBeIncreased;
-            budgetData[hour] += budgetToBeIncreased;
-            budgetSeriesData[hour] = budgetData[hour];
-        }
-        console.log("buffer:" + buffer + " bucketBudget:" + budgetData[hour] + " for hour:" + hour);
     }
 
     function _updateChart(hour, budget) {
-
-        var budgetSeriesData = chartRef.getSeries(0).getData();
+        var budgetSeriesData = chartRef.series[0].data;
         budgetSeriesData[hour] = budget;
-        chartRef.getSeries(0).setData(budgetSeriesData);
+        chartRef.series[0].setData(budgetSeriesData);
     }
 
     function _decreaseBudgetFromBucket(hour, budgetToBeDecreased) {
-        
-        console.log("Decreasing budget:" + budgetToBeDecreased + " to bucket:" + hour);
-        if (budgetToBeDecreased <= budgetData[hour]) {
-            buffer += budgetToBeDecreased;
-            budgetData[hour] -= budgetToBeDecreased;
-            _updateChart(hour, budgetData[hour]);
-        }
-        console.log("buffer:" + buffer + " bucketBudget:" + budgetData[hour] + " for hour:" + hour);
+        dataPromise.then(function(data) {
+            var budgetData = data.BudgetBuckets;
+            console.log("Decreasing budget:" + budgetToBeDecreased + " to bucket:" + hour);
+            if (budgetToBeDecreased <= budgetData[hour]) {
+                buffer += budgetToBeDecreased;
+                budgetData[hour] -= budgetToBeDecreased;
+                _updateChart(hour, budgetData[hour]);
+            }
+            console.log("buffer:" + buffer + " bucketBudget:" + budgetData[hour] + " for hour:" + hour);
+        });
     }
 
     function _getBuffer() {
@@ -569,7 +574,7 @@ var UserOverride = (function(chartRef, budgetData){
         increaseBudgetToBucket: _increaseBudgetToBucket,
         decreaseBudgetFromBucket : _decreaseBudgetFromBucket
     }
-});
+})(ChartFactory.getChartRef());
 
 /******* TIMER RELATED DATA *******/
 
@@ -745,7 +750,34 @@ runTask();
 
 /****** TIMER RELATD ENDS ********/
 
+/** chjart updater */
 
+function updateChart(oldValue, newValue, hour) {
+    var chartRef = ChartFactory.getChartRef();
+    
+    newValue = parseInt(newValue);
+    hour = parseInt(hour);
+
+    var data = chartRef.series[0].data;
+    
+    // if (!oldValue) {
+        //directly update 
+        data[hour].update(newValue);
+        // chartRef.series[0].setData(data);
+        return;
+    // }
+    // oldValue = parseInt(oldValue);
+
+    // if (oldValue > newValue) {
+    //     UserOverride.decreaseBudgetFromBucket(hour, Math.abs(oldValue - newValue))
+    // } else {
+    //     UserOverride.increaseBudgetToBucket(hour, Math.abs(oldValue - newValue))
+    // }
+
+    // data[hour].update(UserOverride.getBuffer());
+
+
+}
 
 function bindEvents() {
     ///******** Timeline  *******///
@@ -763,12 +795,26 @@ function bindEvents() {
       
       $(".decrement").click(function() {
         var sel = $(this).closest('div').find('.budget-input');
-        var new_value = sel.html(function(i, val) { return +val-100 });
+        var old_value = sel.text();
+        sel.html(function(i, val) { return +val - 10.0 });
+        var new_value = sel.text();
+        var hour = $(this).parent().parent().attr('class').split(' ').pop();
+        updateChart(old_value, new_value, hour);
       });
       
       $(".increment").click(function() {
         var sel = $(this).closest('div').find('.budget-input');
-        var new_value = sel.html(function(i, val) { return +val+100 });
+        var old_value = sel.text();
+        sel.html(function(i, val) { return + val + 10.0 });
+        var new_value = sel.text();
+        var hour = $(this).parent().parent().attr('class').split(' ').pop();
+        updateChart(old_value, new_value, hour);
+      });
+
+      $('.budget-input').on('blur', function() {
+          var newValue = $(this).text();
+          var hour = $(this).parent().parent().attr('class').split(' ').pop();
+          updateChart(undefined, newValue, hour);
       });
     
     
