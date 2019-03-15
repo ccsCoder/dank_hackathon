@@ -10,6 +10,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.1.0/handlebars.js"></script>
     <script src="http://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="js/jquery.animateNumber.min.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/modules/draggable-points.js"></script>
 
@@ -37,10 +38,24 @@
 </head>
 <body>
     <h2>Budget Pacer</h2>
+    <div class="loading">
+        <!-- <div class="loading-text"> -->
+            <div class="loader-text">
+                Fetching Budget Data - &nbsp;
+            </div>
+            <div id="loader-count">
+                0% 
+            </div>
+            
+        <!-- </div> -->
+    </div>
+    
     <div class="container">
         <div class="graph-container">
             <div id="budgetTrendChartContainer" class="charts-container"></div>
-            <div class="actions-button" id="actions-button">&#x21e7;</div>
+            <div class="actions-button">
+                <span id="actions-button">Edit Timeline</span>
+            </div>
         </div>
         <div class="budget-container" id="timeline-container">
             <ul id="timeline" class="timeline-container">
@@ -52,9 +67,7 @@
     <script src="js/main.js"></script>
     <script>
         $(function() {
-            var chartConfig = ChartFactory.configure();
-            ChartFactory.render('budgetTrendChartContainer', chartConfig);
-            bindEvents();
+            animateLoader();
         })
     </script>
 </body>

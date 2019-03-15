@@ -238,7 +238,8 @@ var ChartFactory = (function(dataSource) {
             },
             legend: {
                 itemStyle: {
-                    color: '#E0E0E3'
+                    color: '#E0E0E3',
+                    fontWeight: 'normal'
                 },
                 itemHoverStyle: {
                     color: '#FFF'
@@ -356,6 +357,9 @@ var ChartFactory = (function(dataSource) {
         return {
             chart: {
                 // type: 'area'
+            },
+            credits: {
+                enabled: false
             },
             title: {
                 text: 'Budget Pacing Trend(s)'
@@ -820,16 +824,23 @@ function bindEvents() {
     
       //Collapse, expand the containers as needed.
       $('#actions-button').on('click', function() {
-        
-            $(this).hide();
-            $(this).removeClass("up").addClass("down");
-            $(".graph-container").css('height', '70%');
-            $("#timeline-container").slideToggle(500, function() {
-                $(this).css("display", "flex");
-                $('#action-button').toggleClass("down");
+            if ($(this).text() === "Edit Timeline") {
+                $(this).text("Hide Timeline");
+                $(".graph-container").css('height', '70%');
+                $("#timeline-container").slideToggle(500, function() {
+                    $(this).css("display", "flex");
+                    $('#action-button').toggleClass("down");
 
-                ChartFactory.getChartRef().reflow();
+                    ChartFactory.getChartRef().reflow();
             });
+
+            } else {
+                $(this).text("Edit Timeline");
+                $(".graph-container").css('height', '90%');
+                $("#timeline-container").fadeOut(500, function() {
+                    ChartFactory.getChartRef().reflow();
+                });
+            }
       });
 
      
@@ -845,4 +856,29 @@ function bindEvents() {
     //       $(this).fadeOut(500);
     //   })
 } 
+
+function animateLoader () {
+    var percent_number_step = $.animateNumber.numberStepFactories.append(' %')
+    $('#loader-count').animateNumber(
+    {
+        number: 100,
+        color: '#90ee7e',
+        easing: 'easeIn',
+
+        numberStep: percent_number_step
+    },3000, function() {
+        setTimeout(function(){
+            $("#loader-count").css('color', "#55BF3B");
+            $("h2").css("font-size", "1.5em").css("text-align","left").css("margin-left","1.2em");
+            $(".loading").fadeOut(500, function() {
+                $('.container').fadeIn(500, function(){
+                    var chartConfig = ChartFactory.configure();
+                    ChartFactory.render('budgetTrendChartContainer', chartConfig);
+                    bindEvents();
+                });
+            });
+        }, 300)
+    });
+}
+
 
