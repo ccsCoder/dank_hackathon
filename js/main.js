@@ -646,10 +646,13 @@ var  TickerTask = (function(generateColorArrayTask) {
     }
 
     function _updateMetrics(budget, spend, status, currHour, minutes) {
-        $('#currentBudget').text( budget);
+        // $('#currentBudget').text( budget);
         $('#campaignStatus').text( status);
-        $('#spend').text( spend);
+        // $('#spend').text( spend);
         $("#hour").text(currHour + 'Hrs '+ minutes+" mins");
+
+        animateText($('#currentBudget'), budget);
+        animateText($('#spend'), spend);
     }
 
     function _perform(budgetData, predictedClicks, currHour, timeElapsed) {
@@ -746,7 +749,9 @@ var GenerateColorArrayTask = (function() {
     }
 });
 
-
+function animateText(container, finalValue) {
+    $(container).animateNumber({number: finalValue});
+}
 
 //Task Runner
 function runTask() {
@@ -851,7 +856,7 @@ function bindEvents() {
 
             } else {
                 $(this).text("Edit Timeline");
-                $(".graph-container").css('height', '90%');
+                $(".graph-container").css('height', '85%');
                 $("#timeline-container").fadeOut(500, function() {
                     ChartFactory.getChartRef().reflow();
                 });
@@ -881,11 +886,12 @@ function animateLoader () {
         easing: 'easeIn',
 
         numberStep: percent_number_step
-    },3000, function() {
+    },2500, function() {
         setTimeout(function(){
             $("#loader-count").css('color', "#55BF3B");
             $("h2").css("font-size", "1.5em").css("text-align","left").css("margin-left","1.2em");
             $(".loading").fadeOut(500, function() {
+                $('.metrics-table').fadeIn();
                 $('.container').fadeIn(500, function(){
                     var chartConfig = ChartFactory.configure();
                     ChartFactory.render('budgetTrendChartContainer', chartConfig);

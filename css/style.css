@@ -212,7 +212,7 @@
 .container > .graph-container {
     padding: 10px;
     width: 100%;
-    height: 90%;
+    height: 85%;
     margin:5px;
     box-sizing: border-box;
     transition: height 0.5s;
@@ -304,13 +304,18 @@
 }
 
 .metrics-table {
-    font-size: smaller;
+    font-size: 1em;
     margin-right: 20px;
+    border-spacing: 20px;
+    display: none;
 }
 
 .metrics-table .label {
     color: #FF9900;
+    text-align: right;
+    font-weight: 400;
 }
 .metrics-table .value {
     color: #eeaaee;
+    text-align: left;
 }
