@@ -23,7 +23,7 @@
  
  h2 {
    margin: 0.5em 0 0 0;
-   font-size: 3em;
+   font-size: 3.5em;
    font-weight: 200;
    letter-spacing: 2px;
    text-transform: uppercase;
@@ -289,9 +289,9 @@
 #loader-count {
     font-size: 60px;
     color: #f45b5b;
-    margin-bottom: 80px;
+    margin-bottom: 150px;
 }
 
 .loading > .loader-text {
-    margin-bottom: 80px;
+    margin-bottom: 150px;
 }

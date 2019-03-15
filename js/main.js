@@ -760,6 +760,7 @@ function updateChart(oldValue, newValue, hour) {
     var chartRef = ChartFactory.getChartRef();
     
     newValue = parseInt(newValue);
+    newValue = Math.round(newValue,2);
     hour = parseInt(hour);
 
     var data = chartRef.series[0].data;
